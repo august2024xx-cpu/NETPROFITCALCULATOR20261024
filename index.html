@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pizza Coin — Net Profit Estimator</title>
+
+<style>
+:root {
+  --neon: #39ff14;
+  --bg: #050805;
+  --panel: #0c160c;
+  --text: #f4fff1;
+  --muted: #b6c9b1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+
+header {
+  text-align: center;
+  padding: 28px 16px 18px;
+  border-bottom: 2px solid var(--neon);
+  box-shadow: 0 0 20px #39ff1433;
+}
+
+h1 {
+  margin: 0;
+  color: var(--neon);
+  font-size: clamp(2rem, 6vw, 3.8rem);
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px #39ff1466;
+}
+
+header p {
+  margin: 8px 0 0;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+}
+
+main {
+  width: min(1100px, 94%);
+  margin: 24px auto 48px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 2px solid var(--neon);
+  border-radius: 16px;
+  padding: clamp(16px, 3vw, 28px);
+  margin: 18px 0;
+  box-shadow: 0 0 15px #39ff1420;
+}
+
+h2 {
+  color: var(--neon);
+  margin: 0 0 16px;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 245px), 1fr)
+  );
+  gap: 18px;
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+
+.hint {
+  display: block;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 400;
+  margin-top: 3px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  background: #020402;
+  border: 1px solid #8bff78;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+}
+
+input:focus, select:focus {
+  outline: 2px solid var(--neon);
+  outline-offset: 2px;
+}
+
+input[type="range"] {
+  padding: 0;
+  accent-color: var(--neon);
+}
+
+.value {
+  color: var(--neon);
+  font-weight: 700;
+}
+
+.results {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(180px, 1fr)
+  );
+  gap: 12px;
+}
+
+.result {
+  border: 1px solid #39ff1480;
+  border-radius: 10px;
+  padding: 15px;
+  background: #061006;
+}
+
+.result span {
+  display: block;
+  color: var(--muted);
+  font-size: .92rem;
+}
+
+.result strong {
+  display: block;
+  color: var(--neon);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  overflow-wrap: anywhere;
+}
+
+.bar {
+  height: 18px;
+  border: 1px solid var(--neon);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.bar > div {
+  height: 100%;
+  width: 0;
+  background: var(--neon);
+  transition: width .2s;
+}
+
+.note {
+  color: var(--muted);
+  font-size: .92rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+button {
+  cursor: pointer;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--neon);
+  background: var(--neon);
+  color: #031000;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--neon);
+}
+
+button:hover {
+  filter: brightness(1.12);
+}
+
+.qr-wrap {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 260px), 1fr)
+  );
+  align-items: center;
+  gap: 20px;
+}
+
+#qrPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  color: #222;
+}
+
+#qrPreview img {
+  width: 200px;
+  height: 200px;
+  max-width: 100%;
+}
+
+ol, ul {
+  padding-left: 1.4rem;
+}
+
+li {
+  margin: 8px 0;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid #39ff1466;
+  color: var(--muted);
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  header, h1, h2, .value, .result strong {
+    color: #000;
+    text-shadow: none;
+  }
+
+  .panel {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  button, .no-print {
+    display: none !important;
+  }
+
+  input, select {
+    color: #000;
+    background: #fff;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>PIZZA COIN 🍕</h1>
+  <p>Interactive Net Profit Estimator</p>
+</header>
+
+<main>
+
+<section class="panel">
+  <h2>1. Campaign Variables</h2>
+
+  <div class="grid">
+
+    <div>
+      <label for="flyerQty">
+        Flyer quantity
+        <span class="hint">Number of flyers printed and distributed</span>
+      </label>
+      <input id="flyerQty" type="number"
+        min="0" max="10000000" step="100" value="10000">
+    </div>
+
+    <div>
+      <label for="flyerQuality">Flyer quality</label>
+      <select id="flyerQuality">
+        <option value="0.65">Basic — simple design</option>
+        <option value="0.85" selected>Standard — readable color flyer</option>
+        <option value="1">Premium — high-quality print</option>
+      </select>
+      <span class="hint">Quality is a planning factor, not a guaranteed response.</span>
+    </div>
+
+    <div>
+      <label for="posterQty">Posters with QR code</label>
+      <input id="posterQty" type="number"
+        min="0" max="1000000" step="1" value="100">
+    </div>
+
+    <div>
+      <label for="posterCost">Cost per poster ($)</label>
+      <input id="posterCost" type="number"
+        min="0" max="10000" step="0.01" value="1.00">
+    </div>
+
+    <div>
+      <label for="saleAmount">Average sale ($)</label>
+      <input id="saleAmount" type="number"
+        min="1" max="10000" step="1" value="100">
+      <span class="hint">Allowed range: $1–$10,000.</span>
+    </div>
+
+    <div>
+      <label for="profitRate">Net profit per sale (%)</label>
+      <input id="profitRate" type="number"
+        min="0" max="100" step="1" value="50">
+      <span class="hint">50% default, before campaign costs.</span>
+    </div>
+
+    <div>
+      <label for="flyerCost">Cost per flyer ($)</label>
+      <input id="flyerCost" type="number"
+        min="0.01" max="1" step="0.01" value="0.05">
+      <span class="hint">Allowed range: $0.01–$1.00.</span>
+    </div>
+
+    <div>
+      <label for="responseRate">
+        Estimated buyer conversion (%)
+      </label>
+      <input id="responseRate" type="number"
+        min="0" max="100" step="0.01" value="0.5">
+      <span class="hint">Estimated percentage of flyer-equivalent reach becoming sales.</span>
+    </div>
+
+    <div>
+      <label for="posterConversion">
+        Poster / QR extra conversions
+      </label>
+      <input id="posterConversion" type="number"
+        min="0" max="1000000" step="1" value="10">
+      <span class="hint">Estimated additional sales attributed to posters.</span>
+    </div>
+
+    <div>
+      <label for="otherCost">Other campaign costs ($)</label>
+      <input id="otherCost" type="number"
+        min="0" max="100000000" step="0.01" value="0">
+      <span class="hint">Delivery, design, permits, QR service, labor, etc.</span>
+    </div>
+
+  </div>
+
+  <div class="actions no-print">
+    <button id="resetBtn" class="secondary" type="button">
+      Reset examples
+    </button>
+
+    <button id="printBtn" type="button">
+      Print / Save PDF
+    </button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>2. Estimated Results</h2>
+
+  <div class="results" aria-live="polite">
+
+    <div class="result">
+      <span>Estimated sales</span>
+      <strong id="salesOut">—</strong>
+    </div>
+
+    <div class="result">
+      <span>Gross sales revenue</span>
+      <strong id="revenueOut">—</strong>
+    </div>
+
+    <div class="result">
+      <span>Profit before campaign costs</span>
+      <strong id="preProfitOut">—</strong>
+    </div>
+
+    <div class="result">
+      <span>Flyer + poster + other costs</span>
+      <strong id="costOut">—</strong>
+    </div>
+
+    <div class="result">
+      <span>Estimated net campaign profit</span>
+      <strong id="netOut">—</strong>
+    </div>
+
+    <div class="result">
+      <span>Return on campaign cost (ROI)</span>
+      <strong id="roiOut">—</strong>
+    </div>
+
+    <div class="result">
+      <span>Break-even sales needed</span>
+      <strong id="breakEvenOut">—</strong>
+    </div>
+
+    <div class="result">
+      <span>Cost per estimated sale</span>
+      <strong id="costPerSaleOut">—</strong>
+    </div>
+
+  </div>
+
+  <p id="status" class="note"></p>
+
+  <label for="profitBar">
+    Net profit relative to gross sales
+  </label>
+
+  <div class="bar" role="img"
+       aria-label="Net profit as a proportion of gross sales">
+    <div id="profitBar"></div>
+  </div>
+
+  <p class="note">
+    Planning estimate only, not a prediction or guarantee.
+    Actual results depend on distribution, audience, offer,
+    conversion, refunds, taxes, payment fees and fulfillment.
+  </p>
+</section>
+
+<section class="panel">
+  <h2>3. Poster with QR Code</h2>
+
+  <p>
+    Enter the exact Pizza Coin landing page or campaign URL
+    that the QR code should open.
+  </p>
+
+  <div class="qr-wrap">
+
+    <div>
+      <label for="qrUrl">Destination URL</label>
+
+      <input id="qrUrl" type="url"
+        value="https://www.pizza-coin.org"
+        placeholder="https://example.com">
+
+      <p class="note">
+        The QR image uses a public QR image service.
+        Test it on a phone before printing.
+      </p>
+
+      <div class="actions no-print">
+        <button id="openQr" type="button">
+          Open destination
+        </button>
+
+        <button id="downloadQr" class="secondary" type="button">
+          Open QR image
+        </button>
+      </div>
+    </div>
+
+    <div id="qrPreview">
+      <span>QR preview loads here when online.</span>
+    </div>
+
+  </div>
+
+  <div style="margin-top:18px;border:2px dashed #39ff14;padding:18px;text-align:center">
+
+    <h2 style="margin-bottom:8px">PIZZA COIN 🍕</h2>
+
+    <p style="font-size:1.25rem;font-weight:800">
+      SCAN TO LEARN MORE
+    </p>
+
+    <p>Point your phone camera at the QR code above.</p>
+
+    <p id="posterUrlText" style="overflow-wrap:anywhere">
+      https://www.pizza-coin.org
+    </p>
+
+  </div>
+</section>
+
+<section class="panel">
+  <h2>4. Additional Variables to Track</h2>
+
+  <ul>
+    <li>
+      <strong>Distribution completion:</strong>
+      percentage of printed flyers actually delivered.
+    </li>
+    <li>
+      <strong>Audience match:</strong>
+      how closely the location and audience fit the offer.
+    </li>
+    <li>
+      <strong>QR scan rate:</strong>
+      scans divided by flyers or posters distributed.
+    </li>
+    <li>
+      <strong>Landing-page conversion:</strong>
+      visitors who complete a purchase.
+    </li>
+    <li>
+      <strong>Payment processing fees:</strong>
+      card, PayPal and cryptocurrency service fees.
+    </li>
+    <li>
+      <strong>Refunds and chargebacks:</strong>
+      subtract losses from expected proceeds.
+    </li>
+    <li>
+      <strong>Fulfillment costs:</strong>
+      include the actual cost of promised rewards.
+    </li>
+    <li>
+      <strong>Repeat purchases:</strong>
+      track returning customers separately.
+    </li>
+    <li>
+      <strong>Time and labor:</strong>
+      value the hours spent printing and distributing.
+    </li>
+    <li>
+      <strong>Campaign source codes:</strong>
+      use a unique URL or QR code for each location or flyer.
+    </li>
+  </ul>
+</section>
+
+<section class="panel">
+  <h2>5. Top 10 Other Sales Methods</h2>
+
+  <ol>
+    <li>
+      <strong>Landing page:</strong>
+      explain the offer, pricing, conditions and next step.
+    </li>
+    <li>
+      <strong>Email newsletter:</strong>
+      contact people who opted in and provide an unsubscribe option.
+    </li>
+    <li>
+      <strong>Social media videos:</strong>
+      demonstrate the product and link to the official page.
+    </li>
+    <li>
+      <strong>Referral program:</strong>
+      reward verified referrals with transparent terms.
+    </li>
+    <li>
+      <strong>Local business partnerships:</strong>
+      work with relevant shops and event organizers.
+    </li>
+    <li>
+      <strong>Events and market stalls:</strong>
+      use a QR code and a clear explanation of the offer.
+    </li>
+    <li>
+      <strong>Search engine optimization (SEO):</strong>
+      publish useful pages that answer customer questions.
+    </li>
+    <li>
+      <strong>Paid advertising:</strong>
+      test small budgets and measure customer acquisition costs.
+    </li>
+    <li>
+      <strong>Affiliate partners:</strong>
+      use tracked links and disclose commissions.
+    </li>
+    <li>
+      <strong>Educational demonstrations:</strong>
+      explain how the product works, risks, pricing and support.
+    </li>
+  </ol>
+
+  <p class="note">
+    If Pizza Coin is marketed as a cryptoasset or investment,
+    avoid guaranteed-return claims. Check applicable advertising,
+    consumer-protection, securities, privacy and anti-spam rules.
+  </p>
+</section>
+
+</main>
+
+<footer>
+  Pizza Coin — Net Profit Estimator
+  <br>
+  Update the assumptions to compare campaign scenarios.
+</footer>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  const money = n =>
+    new Intl.NumberFormat('en-CA', {
+      style: 'currency',
+      currency: 'CAD',
+      maximumFractionDigits: 2
+    }).format(Number.isFinite(n) ? n : 0);
+
+  const number = n =>
+    new Intl.NumberFormat('en-CA', {
+      maximumFractionDigits: 2
+    }).format(Number.isFinite(n) ? n : 0);
+
+  const ids = [
+    'flyerQty',
+    'flyerQuality',
+    'posterQty',
+    'posterCost',
+    'saleAmount',
+    'profitRate',
+    'flyerCost',
+    'responseRate',
+    'posterConversion',
+    'otherCost'
+  ];
+
+  function val(id) {
+    const n = Number($(id).value);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function calculate() {
+    const flyers = Math.max(0, val('flyerQty'));
+
+    const sale = Math.min(
+      10000,
+      Math.max(1, val('saleAmount'))
+    );
+
+    const margin = Math.min(
+      100,
+      Math.max(0, val('profitRate'))
+    ) / 100;
+
+    const flyerCost = Math.min(
+      1,
+      Math.max(0.01, val('flyerCost'))
+    );
+
+    const posterQty = Math.max(0, val('posterQty'));
+    const posterCost = Math.max(0, val('posterCost'));
+
+    const conversion = Math.min(
+      100,
+      Math.max(0, val('responseRate'))
+    ) / 100;
+
+    const quality = Math.min(
+      1,
+      Math.max(0, val('flyerQuality'))
+    );
+
+    const posterSales = Math.max(
+      0,
+      val('posterConversion')
+    );
+
+    const other = Math.max(0, val('otherCost'));
+
+    const estimatedSales =
+      Math.floor(flyers * conversion * quality) +
+      Math.floor(posterSales);
+
+    const revenue = estimatedSales * sale;
+    const preProfit = revenue * margin;
+
+    const campaignCost =
+      flyers * flyerCost +
+      posterQty * posterCost +
+      other;
+
+    const net = preProfit - campaignCost;
+
+    const roi = campaignCost > 0
+      ? net / campaignCost * 100
+      : null;
+
+    const breakEven = margin > 0
+      ? Math.ceil(campaignCost / (sale * margin))
+      : null;
+
+    const costPerSale = estimatedSales > 0
+      ? campaignCost / estimatedSales
+      : null;
+
+    $('salesOut').textContent = number(estimatedSales);
+    $('revenueOut').textContent = money(revenue);
+    $('preProfitOut').textContent = money(preProfit);
+    $('costOut').textContent = money(campaignCost);
+    $('netOut').textContent = money(net);
+
+    $('roiOut').textContent = roi === null
+      ? 'N/A'
+      : number(roi) + '%';
+
+    $('breakEvenOut').textContent = breakEven === null
+      ? 'N/A'
+      : number(breakEven) + ' sales';
+
+    $('costPerSaleOut').textContent = costPerSale === null
+      ? 'N/A'
+      : money(costPerSale);
+
+    $('status').textContent = net >= 0
+      ? 'Under these assumptions, the campaign covers its modeled costs.'
+      : 'Under these assumptions, the campaign is below break-even. Adjust costs or test a different scenario.';
+
+    $('profitBar').style.width =
+      Math.max(
+        0,
+        Math.min(100, revenue ? net / revenue * 100 : 0)
+      ) + '%';
+  }
+
+  ids.forEach(id => {
+    $(id).addEventListener('input', calculate);
+  });
+
+  $('resetBtn').addEventListener('click', () => {
+    const defaults = {
+      flyerQty: 10000,
+      flyerQuality: '0.85',
+      posterQty: 100,
+      posterCost: 1,
+      saleAmount: 100,
+      profitRate: 50,
+      flyerCost: 0.05,
+      responseRate: 0.5,
+      posterConversion: 10,
+      otherCost: 0
+    };
+
+    Object.entries(defaults).forEach(([id, value]) => {
+      $(id).value = value;
+    });
+
+    calculate();
+  });
+
+  $('printBtn').addEventListener('click', () => {
+    window.print();
+  });
+
+  function validUrl() {
+    const raw = $('qrUrl').value.trim();
+
+    try {
+      const url = new URL(raw);
+      return ['http:', 'https:'].includes(url.protocol)
+        ? url.href
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function updateQr() {
+    const url = validUrl();
+
+    $('posterUrlText').textContent = url
+      || 'Enter a valid http:// or https:// destination URL';
+
+    $('qrPreview').replaceChildren();
+
+    if (!url) {
+      $('qrPreview').textContent =
+        'Enter a valid destination URL to create the QR preview.';
+      return;
+    }
+
+    const img = document.createElement('img');
+
+    img.alt = 'QR code for ' + url;
+
+    img.src =
+      'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data='
+      + encodeURIComponent(url);
+
+    img.onerror = () => {
+      $('qrPreview').textContent =
+        'QR preview unavailable. Check your internet connection.';
+    };
+
+    $('qrPreview').appendChild(img);
+  }
+
+  $('qrUrl').addEventListener('input', updateQr);
+
+  $('openQr').addEventListener('click', () => {
+    const url = validUrl();
+
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('Enter a valid URL beginning with https:// or http://');
+    }
+  });
+
+  $('downloadQr').addEventListener('click', () => {
+    const url = validUrl();
+
+    if (url) {
+      const qr =
+        'https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='
+        + encodeURIComponent(url);
+
+      window.open(qr, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('Enter a valid URL beginning with https:// or http://');
+    }
+  });
+
+  calculate();
+  updateQr();
+})();
+</script>
+
+</body>
+</html>
+
